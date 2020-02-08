@@ -77,8 +77,8 @@ namespace LaserBounceSolver.Entities
         private void AssertCoordinateIsValid(Coordinate c)
         {
             if (c.X < 0 || c.X >= Length) throw new ArgumentException($"{nameof(c.X)} ({c.X}) must be greater than 0 and smaller than {nameof(Length)} ({Length})");
-            if (c.Y < 0 || c.Y >= Length) throw new ArgumentException($"{nameof(c.Y)} ({c.Y}) must be greater than 0 and smaller than {nameof(Width)} ({Width})");
-            if (c.Z < 0 || c.Z >= Length) throw new ArgumentException($"{nameof(c.Z)} ({c.Z}) must be greater than 0 and smaller than {nameof(Height)} ({Height})");
+            if (c.Y < 0 || c.Y >= Height) throw new ArgumentException($"{nameof(c.Y)} ({c.Y}) must be greater than 0 and smaller than {nameof(Height)} ({Height})");
+            if (c.Z < 0 || c.Z >= Width) throw new ArgumentException($"{nameof(c.Z)} ({c.Z}) must be greater than 0 and smaller than {nameof(Width)} ({Width})");
         }
     }
 }

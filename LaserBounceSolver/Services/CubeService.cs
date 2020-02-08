@@ -12,7 +12,5 @@ namespace LaserBounceSolver.Services
 
             return cubes.ToArray();
         }
-
-        public static bool IsLinked(this PlacedCube current, PlacedCube toCheck) => current.OutCell.IsLinked(toCheck.InCell);
     }
 }
