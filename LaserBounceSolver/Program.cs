@@ -7,10 +7,11 @@ namespace LaserBounceSolver
     {
         static void Main(string[] args)
         {
-            var board = new Board(3, 3, 2);
+            var board = new Board(3, 3, 3);
             var start = new Cell(CubeFace.Front, 0, 0, 0).Mirror();
-            var end = new Cell(CubeFace.Left, 0, 0, 0).Mirror();
+            var end = new Cell(CubeFace.Right, 2, 2, 2).Mirror();
 
+            BoardSolver.StartTimerAndShowResults();
             BoardSolver.FindSolutions(board, start, end);
             var solutions = BoardSolver.Solutions;
 

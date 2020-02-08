@@ -1,15 +1,21 @@
 ﻿using LaserBounceSolver.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Timers;
 
 namespace LaserBounceSolver.Services
 {
     public class BoardSolver
     {
         public static IList<Cube[]> Solutions = new List<Cube[]>();
+        private static double _attemptsMade;
+        private static System.Timers.Timer _timer;
 
         public static void FindSolutions(Board board, Cell start, Cell end)
         {
+            _attemptsMade++;
             var nextCubes = GetPossibleCubes(board, start);
 
             foreach (var cube in nextCubes)
@@ -26,6 +32,22 @@ namespace LaserBounceSolver.Services
                     
                 board.Undo();
             }
+        }
+
+        public static void StartTimerAndShowResults()
+        {
+            _timer = new System.Timers.Timer(5000);
+            _timer.Elapsed += ShowStats;
+            _timer.AutoReset = true;
+            _timer.Enabled = true;
+            _timer.Start();
+        }
+
+        private static void ShowStats(object sender, ElapsedEventArgs e)
+        {
+            Console.WriteLine($"**************************************");
+            Console.WriteLine($"# intents: {_attemptsMade}");
+            Console.WriteLine($"# solucions trobades: {Solutions.Count()}");
         }
 
         public static bool IsSolved(Board board, Cell end) => board.LastCube.OutCell.Mirror().Equals(end);

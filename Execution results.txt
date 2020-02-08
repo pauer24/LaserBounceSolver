@@ -1,0 +1,8 @@
+1. no optimized, 1rt version
+	Board 3x3x3
+	In: CubeFace.Front, 0, 0, 0
+	End: CubeFace.Right, 2, 2, 2
+	Results:
+		**************************************
+		# intents: 236061140
+		# solucions trobades: 2450458
