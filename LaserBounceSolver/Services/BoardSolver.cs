@@ -12,6 +12,18 @@ namespace LaserBounceSolver.Services
         public static IList<Cube[]> Solutions = new List<Cube[]>();
         private static double _attemptsMade;
         private static System.Timers.Timer _timer;
+        private static DateTime _startTime = DateTime.Now;
+        private static Coordinate _finalCubeCoordinate = null;
+
+        public static Coordinate FinalCubeCoordinate(Cell end)
+        {
+            if (_finalCubeCoordinate == null)
+            {
+                _finalCubeCoordinate = end.Mirror();
+            }
+
+            return _finalCubeCoordinate;
+        }
 
         public static void FindSolutions(Board board, Cell start, Cell end)
         {
@@ -25,7 +37,7 @@ namespace LaserBounceSolver.Services
                 if (IsSolved(board, end))
                 {
                     Solutions.Add(board.GetPath().Reverse().ToArray());
-                } else
+                } if (!IsExitLocked(board, end))
                 {
                     FindSolutions(board, cube.OutCell, end);
                 }
@@ -33,6 +45,9 @@ namespace LaserBounceSolver.Services
                 board.Undo();
             }
         }
+
+        private static bool IsExitLocked(Board board, Cell end) => !board.IsAvailable(FinalCubeCoordinate(end));
+        
 
         public static void StartTimerAndShowResults()
         {
@@ -48,6 +63,7 @@ namespace LaserBounceSolver.Services
             Console.WriteLine($"**************************************");
             Console.WriteLine($"# intents: {_attemptsMade}");
             Console.WriteLine($"# solucions trobades: {Solutions.Count()}");
+            Console.WriteLine($"Temps invertit: {(e.SignalTime - _startTime).ToString()}");
         }
 
         public static bool IsSolved(Board board, Cell end) => board.LastCube.OutCell.Mirror().Equals(end);

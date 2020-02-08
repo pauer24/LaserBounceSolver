@@ -6,3 +6,14 @@
 		**************************************
 		# intents: 236061140
 		# solucions trobades: 2450458
+		aprox time: 6 mins
+
+2. no exploring more options when exit is locked
+	Board 3x3x3
+	In: CubeFace.Front, 0, 0, 0
+	End: CubeFace.Right, 2, 2, 2
+	Results:
+		**************************************
+		# intents: 76082501
+		# solucions trobades: 2426637
+		Temps invertit: 00:02:05.0188333
