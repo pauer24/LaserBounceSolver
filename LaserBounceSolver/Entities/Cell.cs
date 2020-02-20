@@ -17,10 +17,10 @@ namespace LaserBounceSolver.Entities
             {
                 case CubeFace.Top: return new Cell(CubeFace.Bottom, X, Y + 1, Z);
                 case CubeFace.Bottom: return new Cell(CubeFace.Top, X, Y - 1, Z);
-                case CubeFace.Front: return new Cell(CubeFace.Back, X, Y, Z - 1);
-                case CubeFace.Back: return new Cell(CubeFace.Front, X, Y, Z + 1);
-                case CubeFace.Right: return new Cell(CubeFace.Left, X + 1, Y, Z);
-                case CubeFace.Left: return new Cell(CubeFace.Right, X - 1, Y, Z);
+                case CubeFace.South: return new Cell(CubeFace.North, X, Y, Z - 1);
+                case CubeFace.North: return new Cell(CubeFace.South, X, Y, Z + 1);
+                case CubeFace.East: return new Cell(CubeFace.West, X + 1, Y, Z);
+                case CubeFace.West: return new Cell(CubeFace.East, X - 1, Y, Z);
             }
 
             throw new ArgumentException($"{ToString()} cannot create a Mirror Cell");

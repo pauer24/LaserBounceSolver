@@ -19,7 +19,7 @@ namespace LaserBounceSolver.Entities
 
         public int Length { get; set; } // X
 
-        public Board(int width, int length, int height)
+        public Board(int width, int height, int length)
         {
             if (width <= 0) throw new ArgumentException($"{nameof(width)} must be greater than 0");
             if (length <= 0) throw new ArgumentException($"{nameof(length)} must be greater than 0");

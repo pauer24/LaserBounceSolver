@@ -5,9 +5,9 @@
         None,
         Top,
         Bottom,
-        Right,
-        Left,
-        Front,
-        Back
+        East,
+        West,
+        North,
+        South
     }
 }
