@@ -12,19 +12,10 @@ namespace LaserBounceSolver.Services
         public IList<Cube[]> Solutions = new List<Cube[]>();
         private double _recursiveEntrance;
         private double _impossiblePathsFound;
-        private System.Timers.Timer _timer;
+        private Timer _timer;
         private DateTime _startTime = DateTime.Now;
-        private Coordinate _finalCubeCoordinate = null;
 
-        public Coordinate FinalCubeCoordinate(Cell end)
-        {
-            if (_finalCubeCoordinate == null)
-            {
-                _finalCubeCoordinate = end.Mirror();
-            }
-
-            return _finalCubeCoordinate;
-        }
+        public virtual string UnderstandableName => "Explorador de totes les possibles solucions";
 
         public (Cube[][] SolutionsFound, double TotalStepsTried, double ImpossiblePaths, TimeSpan SpendTime) FindSolutions(Board board, Cell start, Cell end)
         {
@@ -37,7 +28,7 @@ namespace LaserBounceSolver.Services
             return (Solutions.ToArray(), _recursiveEntrance, _impossiblePathsFound, stopWatch.Elapsed);
         }
 
-        public void ExploreSolutions(Board board, Cell start, Cell end)
+        private void ExploreSolutions(Board board, Cell start, Cell end)
         {
             _recursiveEntrance++;
             var nextCubes = GetPossibleCubes(board, start);
@@ -50,21 +41,34 @@ namespace LaserBounceSolver.Services
                 {
                     Solutions.Add(board.GetPath().Reverse().ToArray());
                 }
-                if (!IsExitLocked(board, end))
+                if (StopExploring(board, end))
                 {
-                    ExploreSolutions(board, cube.OutCell, end);
+                    _impossiblePathsFound++;
                 }
                 else
                 {
-                    _impossiblePathsFound++;
+                    ExploreSolutions(board, cube.OutCell, end);
                 }
 
                 board.Undo();
             }
         }
 
-        protected virtual bool IsExitLocked(Board board, Cell end) => false;
-        
+        protected virtual bool StopExploring(Board board, Cell end) => false;
+
+        protected virtual PlacedCube[] GetPossibleCubes(Board board, Cell lastPosition)
+        {
+            var mirror = lastPosition.Mirror();
+            if (!IsViable(board, mirror)) return new PlacedCube[0];
+
+            var potentialCubes = mirror.GetPossibleCubes()
+                                    .Select(cube =>
+                                        new PlacedCube(cube, mirror));
+
+            return potentialCubes.Where(cube => board.IsAvailable(cube.Position)).ToArray();
+        }
+
+        protected bool IsSolved(Board board, Cell end) => board.LastCube.OutCell.Mirror().Equals(end);
 
         private void StartTimerToShowResults()
         {
@@ -81,20 +85,6 @@ namespace LaserBounceSolver.Services
             Console.WriteLine($"# intents: {_recursiveEntrance}");
             Console.WriteLine($"# solucions trobades: {Solutions.Count()}");
             Console.WriteLine($"Temps invertit: {(e.SignalTime - _startTime).ToString()}");
-        }
-
-        protected bool IsSolved(Board board, Cell end) => board.LastCube.OutCell.Mirror().Equals(end);
-
-        protected PlacedCube[] GetPossibleCubes(Board board, Cell lastPosition)
-        {
-            var mirror = lastPosition.Mirror();
-            if (!IsViable(board, mirror)) return new PlacedCube[0];
-
-            var potentialCubes = mirror.GetPossibleCubes()
-                                    .Select(cube =>
-                                        new PlacedCube(cube, mirror));
-
-            return potentialCubes.Where(cube => board.IsAvailable(cube.Position)).ToArray();
         }
 
         private bool IsViable(Board board, Coordinate position) =>

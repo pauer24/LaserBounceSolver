@@ -46,11 +46,12 @@ namespace LaserBounceSolver.Entities
             return _path.Pop();
         }
 
-        internal bool IsAvailable(Coordinate p) =>
-            (0 >= p.X || p.X < Length) && 
-            (0 >= p.Y || p.Y < Height) && 
-            (0 >= p.Z || p.X < Width) && 
-            _cubes[p.X, p.Y, p.Z] == null;
+        internal bool IsAvailable(Coordinate coord) =>
+            coord != null &&
+            (0 >= coord.X || coord.X < Length) && 
+            (0 >= coord.Y || coord.Y < Height) && 
+            (0 >= coord.Z || coord.X < Width) && 
+            _cubes[coord.X, coord.Y, coord.Z] == null;
 
         public Cube GetCube(Coordinate c)
         {

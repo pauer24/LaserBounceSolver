@@ -1,6 +1,7 @@
 ﻿using LaserBounceSolver.Entities;
 using LaserBounceSolver.Services;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -19,7 +20,7 @@ namespace LaserBounceSolver
 
             var result = boardSolver.FindSolutions(board, start, end);
 
-            await WriteSolution(board, start, end, result);
+            await ShowAndExportSolutionWithStatistics(board, start, end, result, boardSolver);
 
             Console.WriteLine("Ja s'ha acabat. Pulsa qualsevol tecla per sortir...");
             Console.ReadKey();
@@ -57,8 +58,8 @@ namespace LaserBounceSolver
             {
                 return (
                     InputParser.ParseBoard(args[0]),
-                    InputParser.ParseCell(args[1]),
-                    InputParser.ParseCell(args[2]));
+                    InputParser.ParseCell(args[1]).Mirror(),
+                    InputParser.ParseCell(args[2]).Mirror());
             }
             catch (Exception e)
             {
@@ -108,26 +109,90 @@ namespace LaserBounceSolver
             return board;
         }
 
-        private static Task WriteSolution(Board board, Cell start, Cell end, (Cube[][] SolutionsFound, double TotalStepsTried, double ImpossiblePaths, TimeSpan SpendTime) result)
+        private static Task ShowAndExportSolutionWithStatistics(
+            Board board, Cell start, Cell end, 
+            (Cube[][] SolutionsFound, double TotalStepsTried, double ImpossiblePaths, TimeSpan SpendTime) result, 
+            AllPathExplorerBoardSolver boardSolver)
         {
             var understandableSolution = new StringBuilder();
 
             understandableSolution.AppendLine($"DIMENSIONS TAULELL: S->N={board.Length}; B->T={board.Height}; W->E={board.Width}");
-            understandableSolution.AppendLine($"\tINICI={start.ToString()}; FI={end.ToString()}");
-
+            understandableSolution.AppendLine($"\tINICI={start.Mirror().ToString()}; FI={end.Mirror().ToString()}");
+            understandableSolution.AppendLine($"\tEstratègia utilitzada={boardSolver.UnderstandableName}");
             understandableSolution.AppendLine($"\t# passos realitzats: {result.TotalStepsTried}");
-            understandableSolution.AppendLine($"\t# camins impossibles explorats: {result.TotalStepsTried}");
+            understandableSolution.AppendLine($"\t# camins impossibles explorats: {result.ImpossiblePaths}");
             understandableSolution.AppendLine($"\t# solucions trobades: {result.SolutionsFound.Length}");
             understandableSolution.AppendLine($"\tTemps invertit: {result.SpendTime.ToString()}");
 
-            Console.WriteLine(understandableSolution.ToString());
-            understandableSolution.AppendLine("******************* SOLUCIONS TROBADES *********************");
-
-            understandableSolution.Append(SolutionTranslator.Convert(result.SolutionsFound));
+            understandableSolution.Append(FormatSolutionWithStatistics(result.SolutionsFound));
 
             Directory.CreateDirectory("./resultats");
 
-            return File.WriteAllTextAsync($".\\resultats\\{board.Length}x{board.Width}x{board.Height}_{DateTime.Now.ToString("yyMMdd_HH.mm.ss")}.txt", understandableSolution.ToString());
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), $"resultats\\{board.Length}x{board.Width}x{board.Height}_{DateTime.Now.ToString("yyMMdd_HH.mm.ss")}.txt");
+            Console.WriteLine("S'han guardat els resultats a: {0}", filePath);
+
+            return File.WriteAllTextAsync(filePath, understandableSolution.ToString());
+        }
+
+        private static StringBuilder FormatSolutionWithStatistics(Cube[][] solutionsFound)
+        {
+            var sortedSolutions = TranslateAndSortSolutions(solutionsFound);
+            
+            var solutionsCountPerChangeDirectionCubesCount = new List<(int UsedCubes, int SolutionsCount)>();
+
+            var sortedAndTranslatedSolutionOutput = new StringBuilder();
+
+            var solutionsPerCubesCount = new StringBuilder();
+            var previousCubesCount = 0;
+            var solutionsCount = 0;
+            foreach (var solution in sortedSolutions)
+            {
+                if (solution.ChangeDirectionCubes != previousCubesCount)
+                {
+                    WriteSolutionsPerCubesCount(solutionsCountPerChangeDirectionCubesCount, sortedAndTranslatedSolutionOutput, solutionsPerCubesCount, previousCubesCount, solutionsCount);
+
+                    solutionsPerCubesCount.Clear();
+                    previousCubesCount = solution.ChangeDirectionCubes;
+                    solutionsCount = 0;
+                }
+
+                solutionsCount++;
+                solutionsPerCubesCount.AppendLine(solution.TranslatedSolution);
+            }
+            WriteSolutionsPerCubesCount(solutionsCountPerChangeDirectionCubesCount, sortedAndTranslatedSolutionOutput, solutionsPerCubesCount, previousCubesCount, solutionsCount);
+            var solutionsWithStatistics = new StringBuilder();
+            solutionsWithStatistics.AppendLine("\n******************* RECOMPTE SOLUCIONS TROBADES *********************");
+            solutionsWithStatistics.AppendLine("# prismes   | # solucions");
+            const int maxAllowedCubes = 6;
+            solutionsCountPerChangeDirectionCubesCount.ForEach(count => solutionsWithStatistics.AppendLine($"{count.UsedCubes}{new string(' ', maxAllowedCubes - count.UsedCubes.ToString().Length)}{count.SolutionsCount}"));
+
+
+            solutionsWithStatistics.AppendLine("\n****************** SOLUCIONS TROBADES PER NOMBRE DE PRISMES *********************");
+            return solutionsWithStatistics.Append(sortedAndTranslatedSolutionOutput);
+        }
+
+        private static void WriteSolutionsPerCubesCount(List<(int UsedCubes, int SolutionsCount)> solutionsCountPerChangeDirectionCubesCount, StringBuilder sortedAndTranslatedSolutionOutput, StringBuilder solutionsPerCubesCount, int previousCubesCount, int solutionsCount)
+        {
+            if (solutionsCount > 0)
+            {
+                solutionsCountPerChangeDirectionCubesCount.Add((previousCubesCount, solutionsCount));
+
+                sortedAndTranslatedSolutionOutput.AppendLine($"\n·· SOLUCIONS AMB {previousCubesCount} PRISMES:");
+                sortedAndTranslatedSolutionOutput.Append(solutionsPerCubesCount);
+            }
+        }
+
+        private static System.Collections.Generic.List<(string TranslatedSolution, int ChangeDirectionCubes, int KeepStraightCubes)> TranslateAndSortSolutions(Cube[][] solutionsFound)
+        {
+            var convertedSolutions = solutionsFound.Select(s => SolutionTranslator.Convert(s).ToString());
+            var processedSolutions = convertedSolutions.Select(solution =>
+            {
+                var keepStraightCubes = solution.Count(c => c == SolutionTranslator.EmptyCubeChar);
+                var changeDirectionCubes = solution.Length - keepStraightCubes;
+                return (solution, changeDirectionCubes, keepStraightCubes);
+            });
+
+            return processedSolutions.OrderBy(s => s.changeDirectionCubes).ToList();
         }
     }
 }

@@ -6,6 +6,8 @@ namespace LaserBounceSolver.Services
 {
     public class SolutionTranslator
     {
+        public const char EmptyCubeChar = '-';
+        
         public static StringBuilder Convert(Cube[][] solutions)
         {
             var appendedTranslation = new StringBuilder();
@@ -25,7 +27,7 @@ namespace LaserBounceSolver.Services
 
             foreach (var cube in solution)
             {
-                translation.Append(cube.In.Opposite() == cube.Out ? ' ' : cube.Out.ToString().First());
+                translation.Append(cube.In.Opposite() == cube.Out ? EmptyCubeChar : cube.Out.ToString().First());
             }
 
             return translation;
